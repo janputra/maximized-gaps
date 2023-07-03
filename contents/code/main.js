@@ -28,7 +28,7 @@ const panel = {
 
 const config = {
     // layouts to apply gaps to
-    includeMaximized: readConfig("includeMaximized", false),
+  //  includeMaximized: readConfig("includeMaximized", true),
     // list of excluded/included applications
     excludeMode: readConfig("excludeMode", true),
     includeMode: readConfig("includeMode", false),
@@ -57,8 +57,8 @@ debug("sizes (l/r/t/b/m):",
     gap.left, gap.right, gap.top, gap.bottom, gap.mid);
 debug("panels (l/r/t/b):",
     panel.left, panel.right, panel.top, panel.bottom);
-debug("layout:",
-    "maximized:", config.includeMaximized);
+// debug("layout:",
+//     "maximized:", config.includeMaximized);
 debug("applications:",
     config.excludeMode ? "exclude" : "include", String(config.applications));
 debug("");
@@ -83,24 +83,23 @@ workspace.clientAdded.connect(onAdded);
 function onAdded(client) {
     debug("added", caption(client));
     applyGaps(client);
-
     onRegeometrized(client);
 }
 
 // trigger applying tile gaps when client is moved or resized
 function onRegeometrized(client) {
-    client.moveResizedChanged.connect((client) => {
-        debug("move resized changed", caption(client));
-        applyGaps(client);
-    });
+    // client.moveResizedChanged.connect((client) => {
+    //     debug("move resized changed", caption(client));
+    //     applyGaps(client);
+    // });
     client.frameGeometryChanged.connect((client) => {
         debug("frame geometry changed", caption(client));
         applyGaps(client)
     });
-    client.clientFinishUserMovedResized.connect((client) => {
-        debug("finish user moved resized", caption(client));
-        applyGaps(client);
-    });
+    // client.clientFinishUserMovedResized.connect((client) => {
+    //     debug("finish user moved resized", caption(client));
+    //     applyGaps(client);
+    // });
     client.fullScreenChanged.connect((client) => {
         debug("fullscreen changed", caption(client));
         applyGaps(client);
@@ -188,7 +187,7 @@ function onRelayouted() {
 function applyGaps(client) {
     // abort if there is a current iteration of gapping still running,
     // the client is null or irrelevant
-    debug("apply gaps", caption(client), config.includeMaximized, maximized(client));
+    debug("apply gaps", caption(client));
     if (block || !client || ignoreClient(client)) return;
     // block applying other gaps as long as current iteration is running
     block = true;
@@ -197,8 +196,8 @@ function applyGaps(client) {
     debug("old geo", geometry(client));
     // make gaps to area grid
     applyGapsArea(client);
-    // make gaps to other windows
-    applyGapsWindows(client);
+    // // make gaps to other windows
+    // applyGapsWindows(client);
     block = false;
 
     debug("");
@@ -213,10 +212,10 @@ function applyGapsArea(client) {
     let edged = Object.assign({}, client.frameGeometry);
     
     // unmaximize if maximized window gap
-    if (config.includeMaximized && maximized(client)) {
-        debug("unmaximize");
-        client.setMaximize(false, false);
-    }
+    // if (config.includeMaximized && maximized(client)) {
+    //     debug("unmaximize");
+    //     client.setMaximize(false, false);
+    // }
 
     // for each window edge, if the edge is near some grid anchor of that edge,
     // set it to the gapped coordinate
@@ -282,103 +281,103 @@ function applyGapsArea(client) {
     }
 }
 
-function applyGapsWindows(client1) {
-    let area = getArea(client1);
-    let grid = getGrid(client1);
+// function applyGapsWindows(client1) {
+//     let area = getArea(client1);
+//     let grid = getGrid(client1);
 
-    debug("apply gaps windows");
+//     debug("apply gaps windows");
 
-    let win1 = Object.assign({}, client1.frameGeometry);
+//     let win1 = Object.assign({}, client1.frameGeometry);
 
-    // for each other window, if they share an edge,
-    // clip or extend both evenly to make the distance the size of the gap
-    for (let j = 0; j < workspace.clientList().length; j++) {
-        let client2 = workspace.clientList()[j];
-        if (!client2) continue;
-        if (ignoreOther(client1, client2)) continue;
+//     // for each other window, if they share an edge,
+//     // clip or extend both evenly to make the distance the size of the gap
+//     for (let j = 0; j < workspace.clientList().length; j++) {
+//         let client2 = workspace.clientList()[j];
+//         if (!client2) continue;
+//         if (ignoreOther(client1, client2)) continue;
 
-        debug("checking", client2.caption);
-        debug(geometry(client1), geometry(client2));
+//         debug("checking", client2.caption);
+//         debug(geometry(client1), geometry(client2));
 
-        let win2 = Object.assign({}, client2.frameGeometry);
+//         let win2 = Object.assign({}, client2.frameGeometry);
         
-        for (let i = 0; i < Object.keys(grid).length; i++) {
-            let edge = Object.keys(grid)[i];
-            switch (edge) {
+//         for (let i = 0; i < Object.keys(grid).length; i++) {
+//             let edge = Object.keys(grid)[i];
+//             switch (edge) {
 
-                case "left":
-                    if (nearWindow(win1.left, win2.right, gap.mid) &&
-                        overlapVer(win1, win2)) {
-                        debug("gap to window", edge, caption(client2), geometry(client2));
-                        let diff = win1.left - win2.right;
-                        // crop right window left edge half gap
-                        win1.x = win1.x - halfDiffL(diff) + halfGapU();
-                        win1.width = win1.width + halfDiffL(diff) - halfGapU();
-                        // crop left window right edge half gap
-                        win2.width = win2.width + halfDiffU(diff) - halfGapL();
-                        debug("changed geo win1", geometry(win1));
-                        debug("changed geo win2", geometry(win2));
-                    }
-                    break;
+//                 case "left":
+//                     if (nearWindow(win1.left, win2.right, gap.mid) &&
+//                         overlapVer(win1, win2)) {
+//                         debug("gap to window", edge, caption(client2), geometry(client2));
+//                         let diff = win1.left - win2.right;
+//                         // crop right window left edge half gap
+//                         win1.x = win1.x - halfDiffL(diff) + halfGapU();
+//                         win1.width = win1.width + halfDiffL(diff) - halfGapU();
+//                         // crop left window right edge half gap
+//                         win2.width = win2.width + halfDiffU(diff) - halfGapL();
+//                         debug("changed geo win1", geometry(win1));
+//                         debug("changed geo win2", geometry(win2));
+//                     }
+//                     break;
 
-                case "right":
-                    if (nearWindow(win2.left, win1.right, gap.mid) &&
-                        overlapVer(win1, win2)) {
-                        debug("gap to window", edge, caption(client2), geometry(client2));
-                        let diff = win2.left - (win1.right + 1);
-                        // crop left window right edge half gap
-                        win1.width = win1.width + halfDiffU(diff) - halfGapL();
-                        // crop right window left edge half gap
-                        win2.x = win2.x - halfDiffL(diff) + halfGapU();
-                        win2.width = win2.width + halfDiffL(diff) - halfGapU();
-                        debug("changed geo win1", geometry(win1));
-                        debug("changed geo win2", geometry(win2));
-                    }
-                    break;
+//                 case "right":
+//                     if (nearWindow(win2.left, win1.right, gap.mid) &&
+//                         overlapVer(win1, win2)) {
+//                         debug("gap to window", edge, caption(client2), geometry(client2));
+//                         let diff = win2.left - (win1.right + 1);
+//                         // crop left window right edge half gap
+//                         win1.width = win1.width + halfDiffU(diff) - halfGapL();
+//                         // crop right window left edge half gap
+//                         win2.x = win2.x - halfDiffL(diff) + halfGapU();
+//                         win2.width = win2.width + halfDiffL(diff) - halfGapU();
+//                         debug("changed geo win1", geometry(win1));
+//                         debug("changed geo win2", geometry(win2));
+//                     }
+//                     break;
 
-                case "top":
-                    if (nearWindow(win1.top, win2.bottom, gap.mid) &&
-                        overlapHor(win1, win2)) {
-                        debug("gap to window", edge, caption(client2), geometry(client2));
-                        let diff = win1.top - win2.bottom;
-                        // crop bottom window top edge half gap
-                        win1.y = win1.y - halfDiffL(diff) + halfGapU();
-                        win1.height = win1.height + halfDiffL(diff) - halfGapU();
-                        // crop top window bottom edge half gap
-                        win2.height = win2.height + halfDiffU(diff) - halfGapL();
-                        debug("changed geo win1", geometry(win1));
-                        debug("changed geo win2", geometry(win2));
-                    }
-                    break;
+//                 case "top":
+//                     if (nearWindow(win1.top, win2.bottom, gap.mid) &&
+//                         overlapHor(win1, win2)) {
+//                         debug("gap to window", edge, caption(client2), geometry(client2));
+//                         let diff = win1.top - win2.bottom;
+//                         // crop bottom window top edge half gap
+//                         win1.y = win1.y - halfDiffL(diff) + halfGapU();
+//                         win1.height = win1.height + halfDiffL(diff) - halfGapU();
+//                         // crop top window bottom edge half gap
+//                         win2.height = win2.height + halfDiffU(diff) - halfGapL();
+//                         debug("changed geo win1", geometry(win1));
+//                         debug("changed geo win2", geometry(win2));
+//                     }
+//                     break;
 
-                case "bottom":
-                    if (nearWindow(win2.top, win1.bottom, gap.mid) &&
-                        overlapHor(win1, win2)) {
-                        debug("gap to window", edge, caption(client2), geometry(client2));
-                        let diff = win2.top - (win1.bottom + 1);
-                        // crop top window bottom edge half gap
-                        win1.height = win1.height + halfDiffU(diff) - halfGapL();
-                        // crop bottom window top edge half gap
-                        win2.y = win2.y - halfDiffL(diff) + halfGapU();
-                        win2.height = win2.height + halfDiffL(diff) - halfGapU();
-                        debug("changed geo win1", geometry(win1));
-                        debug("changed geo win2", geometry(win2));
-                    }
-                    break;
-            }
-        }
+//                 case "bottom":
+//                     if (nearWindow(win2.top, win1.bottom, gap.mid) &&
+//                         overlapHor(win1, win2)) {
+//                         debug("gap to window", edge, caption(client2), geometry(client2));
+//                         let diff = win2.top - (win1.bottom + 1);
+//                         // crop top window bottom edge half gap
+//                         win1.height = win1.height + halfDiffU(diff) - halfGapL();
+//                         // crop bottom window top edge half gap
+//                         win2.y = win2.y - halfDiffL(diff) + halfGapU();
+//                         win2.height = win2.height + halfDiffL(diff) - halfGapU();
+//                         debug("changed geo win1", geometry(win1));
+//                         debug("changed geo win2", geometry(win2));
+//                     }
+//                     break;
+//             }
+//         }
 
-        if (client2.frameGeometry != win2) {
-            debug("set neighboring geometry", geometry(win2));
-            client2.frameGeometry = win2;
-        }
-    }
+//         if (client2.frameGeometry != win2) {
+//             debug("set neighboring geometry", geometry(win2));
+//             client2.frameGeometry = win2;
+//         }
+//     }
 
-    if (client1.frameGeometry != win1) {
-        debug("set neighbored geometry", geometry(win1));
-        client1.frameGeometry = win1;
-    }
-}
+//     if (client1.frameGeometry != win1) {
+//         debug("set neighbored geometry", geometry(win1));
+//         client1.frameGeometry = win1;
+//     }
+// }
 
 
 ///////////////////////
@@ -393,12 +392,12 @@ function getArea(client) {
 // anchor coordinates without and with gaps
 function getGrid(client) {
     let area = getArea(client);
-    let unmaximized = !maximized(client);
+    // let unmaximized = !maximized(client);
     return {
         left: {
             fullLeft: {
                 closed: Math.round(area.left),
-                gapped: Math.round(area.left + gap.left - (panel.left && unmaximized ? gap.left : 0))
+                gapped: Math.round(area.left + gap.left )
             },
             quarterLeft: {
                 closed: Math.round(area.left + 1 * (area.width / 4)),
@@ -428,13 +427,13 @@ function getGrid(client) {
             },
             fullRight: {
                 closed: Math.round(area.right),
-                gapped: Math.round(area.right - gap.right + (panel.right && unmaximized ? gap.right : 0))
+                gapped: Math.round(area.right - gap.right )
             }
         },
         top: {
             fullTop: {
                 closed: Math.round(area.top),
-                gapped: Math.round(area.top + gap.top - (panel.top && unmaximized ? gap.top : 0))
+                gapped: Math.round(area.top + gap.top )
             },
             quarterTop: {
                 closed: Math.round(area.top + 1 * (area.height / 4)),
@@ -464,7 +463,7 @@ function getGrid(client) {
             },
             fullBottom: {
                 closed: Math.round(area.bottom),
-                gapped: Math.round(area.bottom - gap.bottom + (panel.bottom && unmaximized ? gap.bottom : 0))
+                gapped: Math.round(area.bottom - gap.bottom )
             }
         }
     };
@@ -475,9 +474,9 @@ function getGrid(client) {
 ///////////////////////
 
 // a client is maximized iff its geometry is equal to the maximize area
-function maximized(client) {
-    return client.geometry == workspace.clientArea(KWin.MaximizeArea, client);
-}
+// function maximized(client) {
+//     return client.geometry == workspace.clientArea(KWin.MaximizeArea, client);
+// }
 
 // a coordinate is close to another iff
 // the difference is within the tolerance margin but non-zero
@@ -488,50 +487,50 @@ function nearArea(actual, expected_closed, expected_gapped, gap) {
          || Math.abs(actual - expected_gapped) <= tolerance);
 }
 
-function nearWindow(win1, win2, gap) {
-    let tolerance = gap;
-    return win1 - win2 <= tolerance
-        && win1 - win2 >= 0
-        && win1 - win2 != gap;
-}
+// function nearWindow(win1, win2, gap) {
+//     let tolerance = gap;
+//     return win1 - win2 <= tolerance
+//         && win1 - win2 >= 0
+//         && win1 - win2 != gap;
+// }
 
-// horizontal/vertical overlap
+// // horizontal/vertical overlap
 
-function overlapHor(win1, win2) {
-    let tolerance = 2 * gap.mid;
-    return (win1.left <= win2.left + tolerance
-         && win1.right > win2.left + tolerance)
-        || (win2.left <= win1.left + tolerance
-        &&  win2.right + tolerance > win1.left);
-}
+// function overlapHor(win1, win2) {
+//     let tolerance = 2 * gap.mid;
+//     return (win1.left <= win2.left + tolerance
+//          && win1.right > win2.left + tolerance)
+//         || (win2.left <= win1.left + tolerance
+//         &&  win2.right + tolerance > win1.left);
+// }
 
-function overlapVer(win1, win2) {
-    let tolerance = 2 * gap.mid;
-    return (win1.top <= win2.top + tolerance
-         && win1.bottom > win2.top + tolerance)
-        || (win2.top <= win1.top + tolerance
-         && win2.bottom + tolerance > win1.top);
-}
+// function overlapVer(win1, win2) {
+//     let tolerance = 2 * gap.mid;
+//     return (win1.top <= win2.top + tolerance
+//          && win1.bottom > win2.top + tolerance)
+//         || (win2.top <= win1.top + tolerance
+//          && win2.bottom + tolerance > win1.top);
+// }
 
-// floored/ceiled half difference between edges
+// // floored/ceiled half difference between edges
 
-function halfDiffL(diff) {
-    return Math.floor(diff / 2);
-}
+// function halfDiffL(diff) {
+//     return Math.floor(diff / 2);
+// }
 
-function halfDiffU(diff) {
-    return Math.ceil(diff / 2);
-}
+// function halfDiffU(diff) {
+//     return Math.ceil(diff / 2);
+// }
 
-// floored/ceiled half gap mid size
+// // floored/ceiled half gap mid size
 
-function halfGapL() {
-    return Math.floor(gap.mid / 2);
-}
+// function halfGapL() {
+//     return Math.floor(gap.mid / 2);
+// }
 
-function halfGapU() {
-    return Math.ceil(gap.mid / 2);
-}
+// function halfGapU() {
+//     return Math.ceil(gap.mid / 2);
+// }
 
 
 ///////////////////////
@@ -544,7 +543,6 @@ function ignoreClient(client) {
         || !client.normalWindow // not normal
         || !client.resizeable // not resizeable
         || client.fullScreen // fullscreen
-        || (!config.includeMaximized && maximized(client)) // maximized
         || (config.excludeMode // excluded application
             && config.applications.includes(String(client.resourceClass)))
         || (config.includeMode // non-included application
